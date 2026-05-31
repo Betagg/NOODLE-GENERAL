@@ -698,6 +698,18 @@ canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
 .share-line { font-family: var(--cn); font-size: 17px; line-height: 2; letter-spacing: 1px; }
 .share-line b { color: var(--gold); font-family: var(--cn); }
 .share-cta { font-family: var(--cn); font-size: 20px; color: var(--crimson); letter-spacing: 6px; margin-top: 14px; text-shadow: 2px 2px 0 rgba(0,0,0,0.4); }
+.share-link {
+  margin-top: 12px;
+  padding: 8px 9px;
+  border: 2px solid var(--edge-hi);
+  background: rgba(5, 8, 15, 0.72);
+  color: var(--cyan);
+  font-family: var(--pixel);
+  font-size: 8px;
+  line-height: 1.7;
+  word-break: break-all;
+  box-shadow: inset 2px 2px 0 rgba(255,255,255,0.08);
+}
 .copy-toast { position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%); font-family: var(--cn); background: var(--jade); color: #06281a; padding: 10px 18px; box-shadow: 4px 4px 0 rgba(0,0,0,0.5); }
 
 /* ============================================================
@@ -854,6 +866,9 @@ canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
   .share-brand {
     font-size: 22px;
     letter-spacing: 2px;
+  }
+  .share-link {
+    font-size: 7px;
   }
 }
 

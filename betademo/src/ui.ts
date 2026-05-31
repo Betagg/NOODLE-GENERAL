@@ -235,6 +235,7 @@ export class UI {
     $("s-bowl-line").classList.toggle("hidden", !isMinute && !isCampaign);
     $("s-beat").textContent = `${r.beatPct}%`;
     $("s-grade").textContent = r.grade;
+    $("s-link").textContent = shareUrl();
     // Reuse the victory freeze-frame so the share card matches the result screen.
     if (this.hasResultSnap) {
       copyCanvas(this.resultSnap, this.shareSnap);
@@ -246,12 +247,14 @@ export class UI {
   }
 
   shareText(r: GameResult): string {
+    const url = shareUrl();
     if (r.mode === "minute") {
       return [
         "《泡面将军》一分钟挑战",
         `${r.name} 60 秒吃完 ${r.bowls} 碗，击败了 ${r.beatPct}% 的玩家`,
         `获得称号：${r.grade}`,
         "你敢挑战吗？",
+        `来挑战：${url}`,
       ].join("\n");
     }
     if (r.mode === "campaign") {
@@ -260,6 +263,7 @@ export class UI {
         `${r.name} 通关 ${r.stagesCleared}/${r.totalStages} 关，总用时 ${r.time.toFixed(2)} 秒`,
         `获得称号：${r.grade}`,
         "你敢挑战吗？",
+        `来挑战：${url}`,
       ].join("\n");
     }
     return [
@@ -267,6 +271,7 @@ export class UI {
       `${r.name} 用了 ${r.time.toFixed(2)} 秒，击败了 ${r.beatPct}% 的玩家`,
       `获得称号：${r.grade}`,
       "你敢挑战吗？",
+      `来挑战：${url}`,
     ].join("\n");
   }
 }
@@ -283,6 +288,20 @@ function formatClock(seconds: number) {
   const mm = Math.floor(safe / 60).toString().padStart(2, "0");
   const ss = (safe % 60).toString().padStart(2, "0");
   return `${mm}:${ss}`;
+}
+
+const FALLBACK_SHARE_URL = "https://betagg.github.io/NOODLE-GENERAL/";
+
+function shareUrl() {
+  try {
+    const url = new URL(window.location.href);
+    if (url.hostname === "localhost" || url.hostname === "127.0.0.1") return FALLBACK_SHARE_URL;
+    url.hash = "";
+    url.search = "";
+    return url.href || FALLBACK_SHARE_URL;
+  } catch {
+    return FALLBACK_SHARE_URL;
+  }
 }
 
 function drawVideoToCanvas(video: HTMLVideoElement, canvas: HTMLCanvasElement) {
