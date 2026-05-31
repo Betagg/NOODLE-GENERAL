@@ -1,5 +1,6 @@
 import type { GameState, GameResult, NoodleBoss, ReportKind } from "./game/types";
 import { getCampaignTop, getMinuteTop, getTop } from "./game/leaderboard";
+import { renderQrToCanvas } from "./qr";
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) =>
   document.getElementById(id) as T;
@@ -40,6 +41,7 @@ export class UI {
   private resultFace = $("result-face");
   private resultSnap = $<HTMLCanvasElement>("result-snap");
   private shareSnap = $<HTMLCanvasElement>("share-snap");
+  private shareQr = $<HTMLCanvasElement>("share-qr");
   private currentPlayerName = "Beta";
   private hasResultSnap = false;
   private reportCount = 0;
@@ -236,6 +238,7 @@ export class UI {
     $("s-beat").textContent = `${r.beatPct}%`;
     $("s-grade").textContent = r.grade;
     $("s-link").textContent = shareUrl();
+    renderQrToCanvas(shareUrl(), this.shareQr);
     // Reuse the victory freeze-frame so the share card matches the result screen.
     if (this.hasResultSnap) {
       copyCanvas(this.resultSnap, this.shareSnap);
@@ -246,33 +249,75 @@ export class UI {
     show("share");
   }
 
-  shareText(r: GameResult): string {
+  downloadShareImage(r: GameResult) {
+    const canvas = this.renderShareImage(r);
+    const link = document.createElement("a");
+    link.href = canvas.toDataURL("image/png");
+    link.download = `paomian-jiangjun-${Date.now()}.png`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  }
+
+  private renderShareImage(r: GameResult) {
+    const canvas = document.createElement("canvas");
+    canvas.width = 900;
+    canvas.height = 1280;
+    const ctx = canvas.getContext("2d")!;
     const url = shareUrl();
-    if (r.mode === "minute") {
-      return [
-        "《泡面将军》一分钟挑战",
-        `${r.name} 60 秒吃完 ${r.bowls} 碗，击败了 ${r.beatPct}% 的玩家`,
-        `获得称号：${r.grade}`,
-        "你敢挑战吗？",
-        `来挑战：${url}`,
-      ].join("\n");
+    const lines = shareLines(r);
+    const cnFont = `"STKaiti", "Kaiti SC", "KaiTi", "Songti SC", serif`;
+    const pixelFont = `"Press Start 2P", monospace`;
+
+    ctx.imageSmoothingEnabled = false;
+    ctx.fillStyle = "#071126";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    for (let y = 0; y < canvas.height; y += 8) {
+      ctx.fillStyle = y % 16 === 0 ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.16)";
+      ctx.fillRect(0, y, canvas.width, 3);
     }
-    if (r.mode === "campaign") {
-      return [
-        "《泡面将军》征战模式",
-        `${r.name} 通关 ${r.stagesCleared}/${r.totalStages} 关，总用时 ${r.time.toFixed(2)} 秒`,
-        `获得称号：${r.grade}`,
-        "你敢挑战吗？",
-        `来挑战：${url}`,
-      ].join("\n");
+
+    drawPixelPanel(ctx, 42, 42, 816, 1196);
+    drawCenteredText(ctx, "《泡面将军》", 450, 130, `54px ${cnFont}`, "#ffd03d", 5, "#8e1515");
+
+    const faceX = 320;
+    const faceY = 178;
+    const faceSize = 260;
+    ctx.fillStyle = "#05080f";
+    ctx.fillRect(faceX - 12, faceY - 12, faceSize + 24, faceSize + 24);
+    ctx.strokeStyle = "#6e9ad7";
+    ctx.lineWidth = 8;
+    ctx.strokeRect(faceX - 12, faceY - 12, faceSize + 24, faceSize + 24);
+    if (this.hasResultSnap) {
+      ctx.save();
+      ctx.translate(faceX + faceSize, faceY);
+      ctx.scale(-1, 1);
+      ctx.drawImage(this.resultSnap, 0, 0, faceSize, faceSize);
+      ctx.restore();
+    } else {
+      drawCenteredText(ctx, "定 格 表 情", 450, faceY + 138, `28px ${cnFont}`, "#f3ddb0");
     }
-    return [
-      "《泡面将军》",
-      `${r.name} 用了 ${r.time.toFixed(2)} 秒，击败了 ${r.beatPct}% 的玩家`,
-      `获得称号：${r.grade}`,
-      "你敢挑战吗？",
-      `来挑战：${url}`,
-    ].join("\n");
+
+    let y = 508;
+    for (const line of lines) {
+      drawCenteredText(ctx, line.label, 255, y, `31px ${cnFont}`, "#f3ddb0");
+      drawCenteredText(ctx, line.value, 610, y, `34px ${cnFont}`, line.hot ? "#ffcf34" : "#f4e4ba");
+      y += 72;
+    }
+
+    drawCenteredText(ctx, "你 敢 挑 战 吗 ？", 450, y + 28, `34px ${cnFont}`, "#ff4436", 3, "#090909");
+
+    const qrCanvas = document.createElement("canvas");
+    qrCanvas.width = 196;
+    qrCanvas.height = 196;
+    renderQrToCanvas(url, qrCanvas);
+    ctx.fillStyle = "#f7edd0";
+    ctx.fillRect(352, 836, 196, 196);
+    ctx.drawImage(qrCanvas, 352, 836);
+    drawCenteredText(ctx, "扫码出征", 450, 1070, `27px ${cnFont}`, "#f4e4ba");
+    drawCenteredText(ctx, url, 450, 1126, `18px ${pixelFont}`, "#82e5ff");
+    drawCenteredText(ctx, "ZAI · 2046", 450, 1190, `18px ${pixelFont}`, "#bba46d");
+    return canvas;
   }
 }
 
@@ -298,10 +343,74 @@ function shareUrl() {
     if (url.hostname === "localhost" || url.hostname === "127.0.0.1") return FALLBACK_SHARE_URL;
     url.hash = "";
     url.search = "";
-    return url.href || FALLBACK_SHARE_URL;
+    return qrSafeUrl(url.href || FALLBACK_SHARE_URL);
   } catch {
     return FALLBACK_SHARE_URL;
   }
+}
+
+function qrSafeUrl(url: string) {
+  return new TextEncoder().encode(url).length <= 74 ? url : FALLBACK_SHARE_URL;
+}
+
+function shareLines(r: GameResult) {
+  if (r.mode === "minute") {
+    return [
+      { label: "挑战时长", value: "60 秒" },
+      { label: "吃完碗数", value: `${r.bowls} 碗`, hot: true },
+      { label: "击败玩家", value: `${r.beatPct}%` },
+      { label: "获得称号", value: r.grade, hot: true },
+      { label: "最高连击", value: `x${r.maxCombo}` },
+    ];
+  }
+  if (r.mode === "campaign") {
+    return [
+      { label: "总用时", value: `${r.time.toFixed(2)} 秒` },
+      { label: "通关进度", value: `${r.stagesCleared}/${r.totalStages} 关`, hot: true },
+      { label: "击败玩家", value: `${r.beatPct}%` },
+      { label: "获得称号", value: r.grade, hot: true },
+      { label: "最高连击", value: `x${r.maxCombo}` },
+    ];
+  }
+  return [
+    { label: "完成时间", value: `${r.time.toFixed(2)} 秒` },
+    { label: "世界排名", value: `#${r.rank.toLocaleString()}`, hot: true },
+    { label: "击败玩家", value: `${r.beatPct}%` },
+    { label: "获得称号", value: r.grade, hot: true },
+    { label: "最高连击", value: `x${r.maxCombo}` },
+  ];
+}
+
+function drawPixelPanel(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number) {
+  ctx.fillStyle = "#0d2142";
+  ctx.fillRect(x, y, w, h);
+  ctx.strokeStyle = "#ffd03d";
+  ctx.lineWidth = 10;
+  ctx.strokeRect(x, y, w, h);
+  ctx.strokeStyle = "#6e9ad7";
+  ctx.lineWidth = 5;
+  ctx.strokeRect(x + 18, y + 18, w - 36, h - 36);
+}
+
+function drawCenteredText(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  x: number,
+  y: number,
+  font: string,
+  fill: string,
+  shadowBlur = 0,
+  shadowColor = "transparent",
+) {
+  ctx.save();
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.font = font;
+  ctx.fillStyle = fill;
+  ctx.shadowBlur = shadowBlur;
+  ctx.shadowColor = shadowColor;
+  ctx.fillText(text, x, y);
+  ctx.restore();
 }
 
 function drawVideoToCanvas(video: HTMLVideoElement, canvas: HTMLCanvasElement) {

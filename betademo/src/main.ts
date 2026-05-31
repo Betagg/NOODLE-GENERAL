@@ -360,22 +360,21 @@ document.getElementById("back-btn")!.addEventListener("click", () => {
 
 document.getElementById("copy-btn")!.addEventListener("click", async () => {
   if (!lastResult) return;
-  const text = ui.shareText(lastResult);
   try {
-    await navigator.clipboard.writeText(text);
-  } catch {
-    // fallback
-    const ta = document.createElement("textarea");
-    ta.value = text;
-    document.body.appendChild(ta);
-    ta.select();
-    document.execCommand("copy");
-    ta.remove();
+    await ui.downloadShareImage(lastResult);
+    showToast("战绩图片已生成！");
+  } catch (err) {
+    console.error(err);
+    showToast("图片生成失败，请再试一次");
   }
+});
+
+function showToast(text: string) {
   const toast = document.getElementById("copy-toast")!;
+  toast.textContent = text;
   toast.classList.remove("hidden");
   window.setTimeout(() => toast.classList.add("hidden"), 1600);
-});
+}
 
 function bindPlayerNameEditor() {
   let editingSnapshot = playerName;

@@ -698,6 +698,28 @@ canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
 .share-line { font-family: var(--cn); font-size: 17px; line-height: 2; letter-spacing: 1px; }
 .share-line b { color: var(--gold); font-family: var(--cn); }
 .share-cta { font-family: var(--cn); font-size: 20px; color: var(--crimson); letter-spacing: 6px; margin-top: 14px; text-shadow: 2px 2px 0 rgba(0,0,0,0.4); }
+.share-qr-box {
+  width: 118px;
+  margin: 12px auto 0;
+  padding: 7px 7px 6px;
+  border: 2px solid var(--edge-hi);
+  background: #f7edd0;
+  box-shadow: 4px 4px 0 rgba(0,0,0,0.36);
+}
+#share-qr {
+  display: block;
+  width: 104px;
+  height: 104px;
+  image-rendering: pixelated;
+}
+.share-qr-box span {
+  display: block;
+  margin-top: 5px;
+  color: #151006;
+  font-family: var(--cn);
+  font-size: 11px;
+  letter-spacing: 2px;
+}
 .share-link {
   margin-top: 12px;
   padding: 8px 9px;
@@ -869,6 +891,13 @@ canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
   }
   .share-link {
     font-size: 7px;
+  }
+  .share-qr-box {
+    width: 108px;
+  }
+  #share-qr {
+    width: 94px;
+    height: 94px;
   }
 }
 
