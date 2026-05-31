@@ -237,7 +237,6 @@ export class UI {
     $("s-bowl-line").classList.toggle("hidden", !isMinute && !isCampaign);
     $("s-beat").textContent = `${r.beatPct}%`;
     $("s-grade").textContent = r.grade;
-    $("s-link").textContent = shareUrl();
     renderQrToCanvas(shareUrl(), this.shareQr);
     // Reuse the victory freeze-frame so the share card matches the result screen.
     if (this.hasResultSnap) {
@@ -267,27 +266,29 @@ export class UI {
     const url = shareUrl();
     const lines = shareLines(r);
     const cnFont = `"STKaiti", "Kaiti SC", "KaiTi", "Songti SC", serif`;
-    const pixelFont = `"Press Start 2P", monospace`;
 
     ctx.imageSmoothingEnabled = false;
-    ctx.fillStyle = "#071126";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    for (let y = 0; y < canvas.height; y += 8) {
-      ctx.fillStyle = y % 16 === 0 ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.16)";
-      ctx.fillRect(0, y, canvas.width, 3);
-    }
-
-    drawPixelPanel(ctx, 42, 42, 816, 1196);
-    drawCenteredText(ctx, "《泡面将军》", 450, 130, `54px ${cnFont}`, "#ffd03d", 5, "#8e1515");
-
-    const faceX = 320;
-    const faceY = 178;
-    const faceSize = 260;
     ctx.fillStyle = "#05080f";
-    ctx.fillRect(faceX - 12, faceY - 12, faceSize + 24, faceSize + 24);
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    drawParchmentPanel(ctx, 34, 26, 832, 1228);
+
+    drawCenteredText(ctx, shareTitle(r), 450, 118, `64px ${cnFont}`, "#d8392b");
+    drawCenteredText(ctx, "VICTORY", 450, 170, `27px ${cnFont}`, "#e49426");
+    drawCenteredText(ctx, "━━━━━━━━━━━━", 450, 218, `19px ${cnFont}`, "#e49426");
+
+    const faceX = 337;
+    const faceY = 260;
+    const faceSize = 226;
+    ctx.fillStyle = "rgba(42,29,12,0.14)";
+    ctx.fillRect(faceX - 18, faceY - 18, faceSize + 36, faceSize + 36);
+    ctx.fillStyle = "#05080f";
+    ctx.fillRect(faceX - 8, faceY - 8, faceSize + 16, faceSize + 16);
     ctx.strokeStyle = "#6e9ad7";
     ctx.lineWidth = 8;
     ctx.strokeRect(faceX - 12, faceY - 12, faceSize + 24, faceSize + 24);
+    ctx.strokeStyle = "#9c8956";
+    ctx.lineWidth = 4;
+    ctx.strokeRect(faceX - 20, faceY - 20, faceSize + 40, faceSize + 40);
     if (this.hasResultSnap) {
       ctx.save();
       ctx.translate(faceX + faceSize, faceY);
@@ -295,29 +296,31 @@ export class UI {
       ctx.drawImage(this.resultSnap, 0, 0, faceSize, faceSize);
       ctx.restore();
     } else {
-      drawCenteredText(ctx, "定 格 表 情", 450, faceY + 138, `28px ${cnFont}`, "#f3ddb0");
+      drawCenteredText(ctx, "定 格 表 情", 450, faceY + 120, `28px ${cnFont}`, "#4b3210");
     }
     if (isCampaignConquered(r)) drawGeneralCrown(ctx, faceX, faceY, faceSize);
 
-    let y = 508;
+    let y = 570;
     for (const line of lines) {
-      drawCenteredText(ctx, line.label, 255, y, `31px ${cnFont}`, "#f3ddb0");
-      drawCenteredText(ctx, line.value, 610, y, `34px ${cnFont}`, line.hot ? "#ffcf34" : "#f4e4ba");
-      y += 72;
+      drawStatRow(ctx, 88, y - 32, 724);
+      drawText(ctx, line.label, 112, y, `36px ${cnFont}`, "#34250d");
+      drawRightText(ctx, line.value, 782, y, `39px ${cnFont}`, line.hot ? "#8e1515" : "#4b3210");
+      y += 82;
     }
+    drawStatRow(ctx, 88, y - 32, 724);
 
-    drawCenteredText(ctx, "你 敢 挑 战 吗 ？", 450, y + 28, `34px ${cnFont}`, "#ff4436", 3, "#090909");
+    drawCenteredText(ctx, "你 敢 挑 战 吗 ？", 450, 1008, `39px ${cnFont}`, "#d8392b", 1, "#8e1515");
 
     const qrCanvas = document.createElement("canvas");
-    qrCanvas.width = 196;
-    qrCanvas.height = 196;
+    qrCanvas.width = 200;
+    qrCanvas.height = 200;
     renderQrToCanvas(url, qrCanvas);
+    ctx.fillStyle = "rgba(42,29,12,0.14)";
+    ctx.fillRect(338, 1035, 224, 178);
     ctx.fillStyle = "#f7edd0";
-    ctx.fillRect(352, 836, 196, 196);
-    ctx.drawImage(qrCanvas, 352, 836);
-    drawCenteredText(ctx, "扫码出征", 450, 1070, `27px ${cnFont}`, "#f4e4ba");
-    drawCenteredText(ctx, url, 450, 1126, `18px ${pixelFont}`, "#82e5ff");
-    drawCenteredText(ctx, "ZAI · 2046", 450, 1190, `18px ${pixelFont}`, "#bba46d");
+    ctx.fillRect(362, 1044, 176, 176);
+    ctx.drawImage(qrCanvas, 362, 1044, 176, 176);
+    drawCenteredText(ctx, "扫 码 出 征", 450, 1232, `29px ${cnFont}`, "#34250d");
     return canvas;
   }
 }
@@ -354,6 +357,12 @@ function qrSafeUrl(url: string) {
   return new TextEncoder().encode(url).length <= 74 ? url : FALLBACK_SHARE_URL;
 }
 
+function shareTitle(r: GameResult) {
+  if (r.mode === "minute") return "限 時";
+  if (r.mode === "campaign") return "封 將";
+  return "勝 利";
+}
+
 function shareLines(r: GameResult) {
   if (r.mode === "minute") {
     return [
@@ -386,15 +395,58 @@ function isCampaignConquered(r: GameResult) {
   return r.mode === "campaign" && r.totalStages > 0 && r.stagesCleared >= r.totalStages;
 }
 
-function drawPixelPanel(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number) {
-  ctx.fillStyle = "#0d2142";
+function drawParchmentPanel(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number) {
+  const gradient = ctx.createLinearGradient(0, y, 0, y + h);
+  gradient.addColorStop(0, "#efe2b9");
+  gradient.addColorStop(1, "#d8c68e");
+  ctx.fillStyle = gradient;
   ctx.fillRect(x, y, w, h);
-  ctx.strokeStyle = "#ffd03d";
-  ctx.lineWidth = 10;
-  ctx.strokeRect(x, y, w, h);
+
+  for (let lineY = y + 6; lineY < y + h; lineY += 7) {
+    ctx.fillStyle = lineY % 14 === 0 ? "rgba(95,78,45,0.28)" : "rgba(255,255,255,0.22)";
+    ctx.fillRect(x, lineY, w, 2);
+  }
+
+  ctx.strokeStyle = "#fff6dd";
+  ctx.lineWidth = 7;
+  ctx.strokeRect(x + 13, y + 13, w - 26, h - 26);
+  ctx.strokeStyle = "#9c8956";
+  ctx.lineWidth = 7;
+  ctx.strokeRect(x + 4, y + 4, w - 8, h - 8);
   ctx.strokeStyle = "#6e9ad7";
-  ctx.lineWidth = 5;
-  ctx.strokeRect(x + 18, y + 18, w - 36, h - 36);
+  ctx.lineWidth = 4;
+  ctx.strokeRect(x + 22, y + 22, w - 44, h - 44);
+}
+
+function drawStatRow(ctx: CanvasRenderingContext2D, x: number, y: number, width: number) {
+  ctx.strokeStyle = "rgba(60,40,10,0.28)";
+  ctx.lineWidth = 3;
+  ctx.setLineDash([8, 6]);
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(x + width, y);
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function drawText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, font: string, fill: string) {
+  ctx.save();
+  ctx.textAlign = "left";
+  ctx.textBaseline = "middle";
+  ctx.font = font;
+  ctx.fillStyle = fill;
+  ctx.fillText(text, x, y);
+  ctx.restore();
+}
+
+function drawRightText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, font: string, fill: string) {
+  ctx.save();
+  ctx.textAlign = "right";
+  ctx.textBaseline = "middle";
+  ctx.font = font;
+  ctx.fillStyle = fill;
+  ctx.fillText(text, x, y);
+  ctx.restore();
 }
 
 function drawGeneralCrown(ctx: CanvasRenderingContext2D, faceX: number, faceY: number, faceSize: number) {
