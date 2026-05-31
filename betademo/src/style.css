@@ -646,12 +646,191 @@ canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
    RESPONSIVE — keep playable on small screens
    ============================================================ */
 @media (max-width: 900px) {
-  .frame { grid-template-columns: 1fr; height: auto; }
-  #app { overflow-y: auto; place-items: start center; }
+  html, body { overflow: hidden; }
+  .frame {
+    grid-template-columns: 1fr;
+    height: auto;
+    width: min(760px, 100%);
+    padding-top: 42px;
+  }
+  #app {
+    overflow-y: auto;
+    place-items: start center;
+    padding: 12px;
+    -webkit-overflow-scrolling: touch;
+  }
   .col-right { grid-template-rows: auto auto; }
+  .battle {
+    aspect-ratio: 16 / 9;
+    min-height: 260px;
+  }
+  #scene { object-fit: cover; }
+  .home-btn {
+    top: 10px;
+    left: 10px;
+  }
+  .attrs { overflow: visible; }
+  .result-card {
+    max-height: calc(100dvh - 24px);
+  }
+}
+
+@media (max-width: 720px) {
+  .boot { padding: 18px 0; }
+  .title-steam-wrap {
+    padding-top: 30px;
+    margin-top: -30px;
+  }
+  .title-cn {
+    font-size: clamp(42px, 16vw, 76px);
+    letter-spacing: 3px;
+    text-shadow:
+      3px 3px 0 var(--blood),
+      6px 6px 0 rgba(0,0,0,0.6);
+  }
+  .title-en {
+    font-size: clamp(12px, 4vw, 18px);
+    letter-spacing: 2px;
+  }
+  .subtitle {
+    font-size: 14px;
+    letter-spacing: 2px;
+  }
+  .mode-select {
+    width: min(420px, 92vw);
+    grid-template-columns: 1fr;
+  }
+  .bottom-row {
+    grid-template-columns: 1fr;
+  }
+  .char {
+    grid-template-columns: 96px 1fr;
+  }
+  .char-portrait {
+    width: 96px;
+    height: 96px;
+  }
+  .phase-banner {
+    top: 9px;
+    width: calc(100% - 24px);
+    text-align: center;
+    font-size: 16px;
+    letter-spacing: 4px;
+  }
+  .battle-countdown {
+    top: 40px;
+    font-size: 12px;
+  }
+  .mini-stats {
+    grid-template-columns: 1fr 1fr;
+  }
+  .report {
+    height: 112px;
+  }
+  .report-log li {
+    white-space: normal;
+  }
+  .result-btns {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .result-btns .pixel-btn {
+    width: 100%;
+  }
 }
 
 @media (max-width: 560px) {
-  .mode-select { grid-template-columns: 1fr; }
+  .frame {
+    padding-top: 44px;
+  }
+  .panel {
+    padding: 15px 9px 10px;
+  }
+  .panel-tab {
+    font-size: 12px;
+    letter-spacing: 2px;
+    padding: 3px 9px;
+  }
+  .battle {
+    min-height: 220px;
+  }
+  .home-btn {
+    font-size: 11px;
+    letter-spacing: 1px;
+    padding: 7px 10px;
+  }
   .boss-select { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pixel-btn.big {
+    font-size: 16px;
+    padding: 16px;
+  }
+  .mode-option b {
+    font-size: 12px;
+  }
+  .mode-option span {
+    font-size: 10px;
+  }
+  .char-name {
+    font-size: 15px;
+  }
+  .char-job,
+  .army-rank,
+  .mini label,
+  .meter label {
+    font-size: 11px;
+  }
+  .stat-line {
+    font-size: 12px;
+  }
+  .gauge-target::after {
+    display: none;
+  }
+  .result-card {
+    width: min(420px, 94vw);
+    padding: 18px 16px;
+  }
+  .result-title {
+    font-size: 40px;
+    letter-spacing: 5px;
+  }
+  .share-brand {
+    font-size: 22px;
+    letter-spacing: 2px;
+  }
+}
+
+@media (max-width: 420px) {
+  .boot-inner {
+    width: min(360px, 94vw);
+  }
+  .title-cn {
+    font-size: 42px;
+  }
+  .title-en {
+    letter-spacing: 1px;
+  }
+  .subtitle {
+    font-size: 13px;
+  }
+  .battle {
+    min-height: 188px;
+  }
+  .char {
+    grid-template-columns: 84px 1fr;
+    gap: 9px;
+  }
+  .char-portrait {
+    width: 84px;
+    height: 84px;
+  }
+  .mini-stats {
+    gap: 5px 8px;
+  }
+  .phase-banner {
+    font-size: 14px;
+    letter-spacing: 3px;
+  }
+  .ready-flash {
+    font-size: 20px;
+  }
 }

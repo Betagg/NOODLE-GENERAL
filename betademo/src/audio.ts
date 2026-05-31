@@ -1,6 +1,7 @@
 type AudioContextClass = typeof AudioContext;
-const EATING_SOUND_URL = "/audio/eating.mp3";
-const BOILING_SOUND_URL = "/audio/boiling.mp3";
+const ASSET_BASE = import.meta.env.BASE_URL;
+const EATING_SOUND_URL = `${ASSET_BASE}audio/eating.mp3`;
+const BOILING_SOUND_URL = `${ASSET_BASE}audio/boiling.mp3`;
 
 export class SoundBoard {
   private ctx: AudioContext | null = null;
