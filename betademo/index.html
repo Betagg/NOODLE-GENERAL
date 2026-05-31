@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>泡面将军</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <!-- ============ BOOT / START SCREEN ============ -->
+    <div id="boot" class="screen boot">
+      <div class="boot-inner">
+        <div class="koei-mark">ZAI · 2046</div>
+        <div class="title-steam-wrap">
+          <div class="title-smoke" aria-hidden="true">
+            <i></i><i></i><i></i><i></i><i></i><i></i>
+            <i></i><i></i><i></i><i></i><i></i><i></i>
+            <i></i><i></i><i></i><i></i>
+          </div>
+          <h1 class="title-cn">泡面将军</h1>
+        </div>
+        <h2 class="title-en">NOODLE&nbsp;GENERAL</h2>
+        <p class="subtitle">答应我，把汤也喝完</p>
+        <div class="mode-select" aria-label="选择玩法模式">
+          <button type="button" class="mode-option selected" data-mode="classic">
+            <b>一碗决胜</b><span>吃完即胜</span>
+          </button>
+          <button type="button" class="mode-option" data-mode="minute">
+            <b>一分钟挑战</b><span>限时吃碗数</span>
+          </button>
+          <button type="button" class="mode-option" data-mode="campaign">
+            <b>征战模式</b><span>五关封将</span>
+          </button>
+        </div>
+        <button id="start-btn" class="pixel-btn big">出征</button>
+        <div id="boot-status" class="boot-status"></div>
+      </div>
+    </div>
+
+    <!-- ============ MAIN GAME (KOEI LAYOUT) ============ -->
+    <div id="app" class="screen hidden">
+      <div class="frame">
+        <!-- LEFT COLUMN -->
+        <section class="col-left">
+          <!-- 战斗区域 -->
+          <div class="panel battle">
+            <div class="panel-tab">战 況</div>
+            <canvas id="scene" width="640" height="360"></canvas>
+            <div id="phase-banner" class="phase-banner">吹 凉 泡 面</div>
+            <div id="battle-countdown" class="battle-countdown hidden">01:00</div>
+            <div id="ready-flash" class="ready-flash hidden">READY TO EAT</div>
+          </div>
+
+          <!-- 战报区域 -->
+          <div class="panel report">
+            <div class="panel-tab">戰 報</div>
+            <ul id="report-log" class="report-log"></ul>
+          </div>
+
+          <!-- 玩家面板 + 泡面面板 -->
+          <div class="bottom-row">
+            <div class="panel char player-card">
+              <div class="panel-tab">玩 家</div>
+              <div class="char-portrait" id="player-portrait">
+                <video id="cam" autoplay muted playsinline></video>
+                <div class="portrait-frame"></div>
+                <div class="combo-badge hidden" id="combo-badge">COMBO x0</div>
+              </div>
+              <div class="char-meta">
+                <div
+                  id="player-name"
+                  class="char-name player-name"
+                  role="textbox"
+                  tabindex="0"
+                  contenteditable="plaintext-only"
+                  spellcheck="false"
+                  aria-label="玩家名字"
+                  title="点击改名"
+                >Beta</div>
+                <div id="player-job" class="char-job">吹面骑兵 · Lv.6</div>
+                <div class="stat-line"><span>武力</span><b class="joke">99</b></div>
+                <div class="stat-line"><span>吹气</span><b>98</b></div>
+                <div class="stat-line"><span>吸力</span><b>92</b></div>
+                <div class="stat-line"><span>经验</span><b>24</b></div>
+              </div>
+            </div>
+
+            <div class="panel char boss-card">
+              <div class="panel-tab">敵 將</div>
+              <div class="char-portrait boss-portrait" id="boss-portrait">
+                <canvas id="boss-mini" width="120" height="120"></canvas>
+              </div>
+              <div class="char-meta">
+                <div class="char-name" id="boss-name">红烧牛肉面</div>
+                <div class="char-job" id="boss-job">经典Boss · Lv.7</div>
+                <div class="boss-select" aria-label="选择敌将">
+                  <button type="button" class="boss-option selected" data-noodle="hongshao">红烧</button>
+                  <button type="button" class="boss-option" data-noodle="suancai">酸菜</button>
+                  <button type="button" class="boss-option" data-noodle="paojiao">泡椒</button>
+                  <button type="button" class="boss-option" data-noodle="xiangla">香辣</button>
+                  <button type="button" class="boss-option" data-noodle="laotan">老坛</button>
+                </div>
+                <div class="stat-line"><span>热度</span><b id="boss-heat">100</b></div>
+                <div class="stat-line"><span>长度</span><b id="boss-len">100</b></div>
+                <div class="stat-line"><span>韧性</span><b id="boss-tough">80</b></div>
+                <div class="stat-line"><span>经验</span><b id="boss-exp">0</b></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- RIGHT COLUMN -->
+        <aside class="col-right">
+          <div class="panel attrs">
+            <div class="panel-tab">泡 面 軍</div>
+            <div class="army-head">
+              <div id="army-name" class="army-name">玩家：Beta</div>
+              <div id="army-rank" class="army-rank">Lv.6 吹面骑兵</div>
+            </div>
+
+            <div class="gauge-block">
+              <div class="gauge-row">
+                <label>泡面温度</label>
+                <span id="temp-val" class="gauge-num hot">100℃</span>
+              </div>
+              <div class="gauge"><i id="temp-bar" class="gauge-fill temp"></i><u id="temp-target" class="gauge-target"></u></div>
+
+              <div class="gauge-row">
+                <label>面条剩余</label>
+                <span id="noodle-val" class="gauge-num">100%</span>
+              </div>
+              <div class="gauge"><i id="noodle-bar" class="gauge-fill noodle"></i></div>
+
+              <div class="gauge-row">
+                <label>连击数</label>
+                <span id="combo-val" class="gauge-num">0</span>
+              </div>
+              <div class="gauge thin"><i id="combo-bar" class="gauge-fill combo"></i></div>
+            </div>
+
+            <div class="mini-stats">
+              <div class="mini"><label>吹气值</label><b>99</b></div>
+              <div class="mini"><label>吸力值</label><b>88</b></div>
+              <div class="mini"><label>肺活量</label><b>95</b></div>
+              <div class="mini"><label>饥饿值</label><b>92</b></div>
+              <div class="mini"><label>模式</label><b id="mode-val">一碗</b></div>
+              <div class="mini"><label id="bowls-label">碗数</label><b id="bowls-val">0</b></div>
+              <div class="mini"><label>经验值</label><b id="exp-val">24</b></div>
+              <div class="mini"><label id="timer-label">计时</label><b id="timer-val">0.00</b></div>
+            </div>
+          </div>
+
+          <!-- 小地图 -->
+          <div class="panel minimap">
+            <div class="panel-tab">小 地 圖</div>
+            <div class="minimap-body">
+              <div class="signal" id="signal">
+                <span class="dot"></span>
+                <span id="signal-text">识别中…</span>
+              </div>
+              <div class="meter">
+                <label>吹气强度</label>
+                <div class="meter-bar"><i id="blow-meter"></i></div>
+              </div>
+              <div class="meter">
+                <label>吸面力度</label>
+                <div class="meter-bar"><i id="open-meter"></i></div>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <!-- ============ VICTORY / RESULT ============ -->
+    <div id="result" class="screen overlay hidden">
+      <div class="result-card">
+        <div class="result-rule">━━━━━━━━━━━━━</div>
+        <h2 id="result-title" class="result-title">勝 利</h2>
+        <div class="result-sub">VICTORY</div>
+        <div class="result-rule">━━━━━━━━━━━━━</div>
+        <div id="result-face" class="result-face hidden">
+          <canvas id="result-snap" width="160" height="160"></canvas>
+          <span>定 格 表 情</span>
+        </div>
+        <div class="result-row"><span id="r-time-label">完成时间</span><b id="r-time">0.00 秒</b></div>
+        <div class="result-row"><span id="r-rank-label">世界排名</span><b id="r-rank">#—</b></div>
+        <div class="result-row"><span>评价</span><b id="r-grade" class="grade">泡面校尉</b></div>
+        <div class="result-row"><span>最高连击</span><b id="r-combo">x0</b></div>
+
+        <div class="lb">
+          <div id="lb-title" class="lb-title">本 地 排 行 榜</div>
+          <ol id="lb-list" class="lb-list"></ol>
+        </div>
+
+        <div class="result-btns">
+          <button id="again-btn" class="pixel-btn">再 来 一 碗</button>
+          <button id="share-btn" class="pixel-btn ghost">分 享 战 绩</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ SHARE CARD ============ -->
+    <div id="share" class="screen overlay hidden">
+      <div class="share-card" id="share-card">
+        <div class="share-brand">《泡面将军》</div>
+        <div class="share-face"><canvas id="share-snap" width="160" height="160"></canvas></div>
+        <p class="share-line">我用了 <b id="s-time">12.34</b> 秒</p>
+        <p id="s-bowl-line" class="share-line hidden"><span id="s-bowls-label">吃完</span> <b id="s-bowls">0</b> <span id="s-bowls-unit">碗</span></p>
+        <p class="share-line">击败了 <b id="s-beat">87%</b> 的玩家</p>
+        <p class="share-line">获得称号：<b id="s-grade" class="grade">吹面将军</b></p>
+        <p class="share-cta">你 敢 挑 战 吗 ？</p>
+      </div>
+      <div class="result-btns">
+        <button id="copy-btn" class="pixel-btn">复制战绩文案</button>
+        <button id="back-btn" class="pixel-btn ghost">立 即 挑 战</button>
+      </div>
+      <div id="copy-toast" class="copy-toast hidden">已复制到剪贴板！</div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

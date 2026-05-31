@@ -1,0 +1,19 @@
+{
+  "name": "paomian-jiangjun",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "泡面将军 - a webcam mouth-action retro KOEI-style web game",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview --host"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "vite": "^5.4.10"
+  },
+  "dependencies": {
+    "@mediapipe/tasks-vision": "^0.10.18"
+  }
+}

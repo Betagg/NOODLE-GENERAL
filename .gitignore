@@ -1,0 +1,6 @@
+betademo/node_modules/
+betademo/dist/
+betademo/.vite/
+
+.DS_Store
+*.log
