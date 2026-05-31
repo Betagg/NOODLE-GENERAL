@@ -370,7 +370,6 @@ function shareLines(r: GameResult) {
       { label: "吃完碗数", value: `${r.bowls} 碗`, hot: true },
       { label: "击败玩家", value: `${r.beatPct}%` },
       { label: "获得称号", value: r.grade, hot: true },
-      { label: "最高连击", value: `x${r.maxCombo}` },
     ];
   }
   if (r.mode === "campaign") {
@@ -379,7 +378,6 @@ function shareLines(r: GameResult) {
       { label: "通关进度", value: `${r.stagesCleared}/${r.totalStages} 关`, hot: true },
       { label: "击败玩家", value: `${r.beatPct}%` },
       { label: "获得称号", value: r.grade, hot: true },
-      { label: "最高连击", value: `x${r.maxCombo}` },
     ];
   }
   return [
@@ -387,7 +385,6 @@ function shareLines(r: GameResult) {
     { label: "世界排名", value: `#${r.rank.toLocaleString()}`, hot: true },
     { label: "击败玩家", value: `${r.beatPct}%` },
     { label: "获得称号", value: r.grade, hot: true },
-    { label: "最高连击", value: `x${r.maxCombo}` },
   ];
 }
 
