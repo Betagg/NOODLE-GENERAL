@@ -40,8 +40,7 @@ export class UI {
   private armyRank = $("army-rank");
   private resultFace = $("result-face");
   private resultSnap = $<HTMLCanvasElement>("result-snap");
-  private shareSnap = $<HTMLCanvasElement>("share-snap");
-  private shareQr = $<HTMLCanvasElement>("share-qr");
+  private shareArt = $<HTMLCanvasElement>("share-art");
   private currentPlayerName = "Beta";
   private hasResultSnap = false;
   private reportCount = 0;
@@ -170,7 +169,6 @@ export class UI {
   captureResultFace(video: HTMLVideoElement) {
     this.hasResultSnap = drawVideoToCanvas(video, this.resultSnap);
     this.resultFace.classList.toggle("hidden", !this.hasResultSnap);
-    if (this.hasResultSnap) copyCanvas(this.resultSnap, this.shareSnap);
   }
 
   showResult(r: GameResult) {
@@ -228,28 +226,15 @@ export class UI {
   }
 
   showShare(r: GameResult, snapFrom?: HTMLVideoElement) {
-    const isMinute = r.mode === "minute";
-    const isCampaign = r.mode === "campaign";
-    $("s-time").textContent = isMinute ? "60" : r.time.toFixed(2);
-    $("s-bowls-label").textContent = isCampaign ? "通关" : "吃完";
-    $("s-bowls").textContent = isCampaign ? `${r.stagesCleared}/${r.totalStages}` : `${r.bowls}`;
-    $("s-bowls-unit").textContent = isCampaign ? "关" : "碗";
-    $("s-bowl-line").classList.toggle("hidden", !isMinute && !isCampaign);
-    $("s-beat").textContent = `${r.beatPct}%`;
-    $("s-grade").textContent = r.grade;
-    renderQrToCanvas(shareUrl(), this.shareQr);
     // Reuse the victory freeze-frame so the share card matches the result screen.
-    if (this.hasResultSnap) {
-      copyCanvas(this.resultSnap, this.shareSnap);
-    } else if (snapFrom) {
-      this.hasResultSnap = drawVideoToCanvas(snapFrom, this.shareSnap);
-    }
+    if (!this.hasResultSnap && snapFrom) this.hasResultSnap = drawVideoToCanvas(snapFrom, this.resultSnap);
+    this.renderShareImage(r, this.shareArt);
     hide("result");
     show("share");
   }
 
   downloadShareImage(r: GameResult) {
-    const canvas = this.renderShareImage(r);
+    const canvas = this.renderShareImage(r, this.shareArt);
     const link = document.createElement("a");
     link.href = canvas.toDataURL("image/png");
     link.download = `paomian-jiangjun-${Date.now()}.png`;
@@ -258,8 +243,8 @@ export class UI {
     link.remove();
   }
 
-  private renderShareImage(r: GameResult) {
-    const canvas = document.createElement("canvas");
+  private renderShareImage(r: GameResult, target?: HTMLCanvasElement) {
+    const canvas = target ?? document.createElement("canvas");
     canvas.width = 900;
     canvas.height = 1280;
     const ctx = canvas.getContext("2d")!;
@@ -272,13 +257,13 @@ export class UI {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     drawParchmentPanel(ctx, 34, 26, 832, 1228);
 
-    drawCenteredText(ctx, shareTitle(r), 450, 118, `64px ${cnFont}`, "#d8392b");
-    drawCenteredText(ctx, "VICTORY", 450, 170, `27px ${cnFont}`, "#e49426");
-    drawCenteredText(ctx, "━━━━━━━━━━━━", 450, 218, `19px ${cnFont}`, "#e49426");
+    drawCenteredText(ctx, shareTitle(r), 450, 108, `58px ${cnFont}`, "#d8392b");
+    drawCenteredText(ctx, "VICTORY", 450, 158, `24px ${cnFont}`, "#e49426");
+    drawCenteredText(ctx, "━━━━━━━━━━━━", 450, 202, `16px ${cnFont}`, "#e49426");
 
-    const faceX = 337;
-    const faceY = 260;
-    const faceSize = 226;
+    const faceX = 300;
+    const faceY = 235;
+    const faceSize = 300;
     ctx.fillStyle = "rgba(42,29,12,0.14)";
     ctx.fillRect(faceX - 18, faceY - 18, faceSize + 36, faceSize + 36);
     ctx.fillStyle = "#05080f";
@@ -300,27 +285,27 @@ export class UI {
     }
     if (isCampaignConquered(r)) drawGeneralCrown(ctx, faceX, faceY, faceSize);
 
-    let y = 570;
+    let y = 610;
     for (const line of lines) {
       drawStatRow(ctx, 88, y - 32, 724);
-      drawText(ctx, line.label, 112, y, `36px ${cnFont}`, "#34250d");
-      drawRightText(ctx, line.value, 782, y, `39px ${cnFont}`, line.hot ? "#8e1515" : "#4b3210");
-      y += 82;
+      drawText(ctx, line.label, 112, y, `32px ${cnFont}`, "#34250d");
+      drawRightText(ctx, line.value, 782, y, `34px ${cnFont}`, line.hot ? "#8e1515" : "#4b3210");
+      y += 80;
     }
     drawStatRow(ctx, 88, y - 32, 724);
 
-    drawCenteredText(ctx, "你 敢 挑 战 吗 ？", 450, 1008, `39px ${cnFont}`, "#d8392b", 1, "#8e1515");
+    drawCenteredText(ctx, "你 敢 挑 战 吗 ？", 450, 940, `34px ${cnFont}`, "#d8392b", 1, "#8e1515");
 
     const qrCanvas = document.createElement("canvas");
     qrCanvas.width = 200;
     qrCanvas.height = 200;
     renderQrToCanvas(url, qrCanvas);
     ctx.fillStyle = "rgba(42,29,12,0.14)";
-    ctx.fillRect(338, 1035, 224, 178);
+    ctx.fillRect(338, 980, 224, 178);
     ctx.fillStyle = "#f7edd0";
-    ctx.fillRect(362, 1044, 176, 176);
-    ctx.drawImage(qrCanvas, 362, 1044, 176, 176);
-    drawCenteredText(ctx, "扫 码 出 征", 450, 1232, `29px ${cnFont}`, "#34250d");
+    ctx.fillRect(362, 989, 176, 176);
+    ctx.drawImage(qrCanvas, 362, 989, 176, 176);
+    drawCenteredText(ctx, "扫 码 出 征", 450, 1208, `26px ${cnFont}`, "#34250d");
     return canvas;
   }
 }
@@ -523,11 +508,4 @@ function drawVideoToCanvas(video: HTMLVideoElement, canvas: HTMLCanvasElement) {
   } catch {
     return false;
   }
-}
-
-function copyCanvas(from: HTMLCanvasElement, to: HTMLCanvasElement) {
-  const ctx = to.getContext("2d");
-  if (!ctx) return;
-  ctx.clearRect(0, 0, to.width, to.height);
-  ctx.drawImage(from, 0, 0, to.width, to.height);
 }
