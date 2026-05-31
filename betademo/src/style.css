@@ -252,6 +252,35 @@ canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
   background:
     radial-gradient(120% 90% at 50% 0%, #16203a 0%, #0a0e1d 55%, #05070f 100%);
 }
+.home-btn {
+  position: fixed;
+  top: 14px;
+  left: 14px;
+  z-index: 20;
+  font-family: var(--cn);
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: var(--cyan);
+  background: linear-gradient(180deg, var(--panel-2), var(--panel));
+  border: 2px solid var(--edge-lo);
+  padding: 8px 12px;
+  cursor: pointer;
+  box-shadow:
+    inset 2px 2px 0 var(--edge-hi),
+    inset -2px -2px 0 var(--edge-lo),
+    3px 3px 0 rgba(0,0,0,0.5);
+}
+.home-btn:hover {
+  color: var(--gold);
+  filter: brightness(1.14);
+}
+.home-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow:
+    inset 2px 2px 0 var(--edge-hi),
+    inset -2px -2px 0 var(--edge-lo),
+    1px 1px 0 rgba(0,0,0,0.5);
+}
 .frame {
   width: min(1280px, 100%);
   height: min(720px, calc(100vh - 28px));

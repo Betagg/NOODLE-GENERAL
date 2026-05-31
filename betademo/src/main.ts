@@ -31,6 +31,7 @@ let playerName = loadPlayerName();
 let campaignStageIndex = 0;
 let campaignElapsed = 0;
 let campaignMaxCombo = 0;
+let sessionId = 0;
 
 const engine = new Engine({
   onReport: (text, kind) => {
@@ -48,6 +49,7 @@ const engine = new Engine({
 
 // ---------------- boot ----------------
 const startBtn = document.getElementById("start-btn")!;
+const homeBtn = document.getElementById("home-btn")!;
 const noodleOptions = Array.from(
   document.querySelectorAll<HTMLButtonElement>("[data-noodle]"),
 );
@@ -96,8 +98,10 @@ startBtn.addEventListener("click", async () => {
     startBtn.removeAttribute("disabled");
   }
 });
+homeBtn.addEventListener("click", returnHome);
 
 function beginGame() {
+  sessionId++;
   hide("boot");
   show("app");
   if (selectedMode === "campaign") {
@@ -153,6 +157,7 @@ function selectMode(mode: GameMode) {
 }
 
 function startCampaign() {
+  sessionId++;
   campaignStageIndex = 0;
   campaignElapsed = 0;
   campaignMaxCombo = 0;
@@ -220,7 +225,9 @@ function endGame() {
       ui.setCampaignRankText(cleared, CAMPAIGN_STAGES.length);
       ui.pushReport(`第 ${cleared} 关肃清，用时 ${s.elapsed.toFixed(2)} 秒。`, "crit");
       campaignStageIndex = cleared;
+      const token = sessionId;
       window.setTimeout(() => {
+        if (token !== sessionId) return;
         startCampaignStage(campaignStageIndex, false);
       }, 700);
       return;
@@ -235,7 +242,9 @@ function endGame() {
     );
     ui.setCampaignRankText(cleared, CAMPAIGN_STAGES.length);
     ui.pushReport(`五关平定，总用时 ${campaignElapsed.toFixed(2)} 秒。`, "crit");
+    const token = sessionId;
     window.setTimeout(() => {
+      if (token !== sessionId) return;
       ui.captureResultFace(camVideo);
       ui.showResult(lastResult!);
     }, 1000);
@@ -251,7 +260,9 @@ function endGame() {
     s.mode === "minute" ? `时间到！共吃 ${s.bowls} 碗` : `胜利！用时 ${s.elapsed.toFixed(2)} 秒`,
     "crit",
   );
+  const token = sessionId;
   window.setTimeout(() => {
+    if (token !== sessionId) return;
     ui.captureResultFace(camVideo);
     ui.showResult(lastResult!);
   }, 1000);
@@ -259,6 +270,7 @@ function endGame() {
 
 // ---------------- result buttons ----------------
 document.getElementById("again-btn")!.addEventListener("click", () => {
+  sessionId++;
   hide("result");
   sounds.setSlurping(false);
   if (selectedMode === "campaign") {
@@ -279,6 +291,25 @@ document.getElementById("again-btn")!.addEventListener("click", () => {
   );
   running = true;
 });
+
+function returnHome() {
+  sessionId++;
+  running = false;
+  source = null;
+  sounds.setSlurping(false);
+  tracker?.stop();
+  tracker = null;
+  startBtn.removeAttribute("disabled");
+  bootStatus.textContent = "";
+  ui.clearReport();
+  ui.setCampaignRankText(0, 0);
+  hide("app");
+  hide("result");
+  hide("share");
+  show("boot");
+  homeScreenActive = true;
+  void sounds.startHomeAmbience();
+}
 
 document.getElementById("share-btn")!.addEventListener("click", () => {
   if (lastResult) ui.showShare(lastResult, camVideo);
