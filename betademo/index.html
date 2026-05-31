@@ -40,6 +40,22 @@
         <button id="start-btn" class="pixel-btn big">出征</button>
         <div id="boot-status" class="boot-status"></div>
       </div>
+      <div id="name-gate" class="name-gate hidden" role="dialog" aria-modal="true" aria-labelledby="name-gate-title">
+        <div class="name-card">
+          <div class="panel-tab">登 名</div>
+          <h3 id="name-gate-title">报 上 名 来</h3>
+          <input
+            id="first-name-input"
+            class="name-input"
+            type="text"
+            maxlength="12"
+            autocomplete="nickname"
+            value="Beta"
+            aria-label="玩家名字"
+          />
+          <button id="name-confirm-btn" type="button" class="pixel-btn">领 命 出 征</button>
+        </div>
+      </div>
     </div>
 
     <!-- ============ MAIN GAME (KOEI LAYOUT) ============ -->

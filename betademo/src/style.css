@@ -241,6 +241,64 @@ canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
   min-height: 14px;
   letter-spacing: 1px;
 }
+.name-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(3,5,12,0.72);
+}
+.name-card {
+  position: relative;
+  width: min(420px, 92vw);
+  background: linear-gradient(180deg, var(--panel-2), var(--panel));
+  border: 3px solid var(--edge-lo);
+  box-shadow:
+    inset 2px 2px 0 var(--edge-hi),
+    inset -3px -3px 0 var(--edge-lo),
+    8px 8px 0 rgba(0,0,0,0.58);
+  padding: 30px 20px 18px;
+  text-align: center;
+}
+.name-card h3 {
+  font-family: var(--cn);
+  font-size: 24px;
+  letter-spacing: 5px;
+  color: var(--gold);
+  text-shadow: 3px 3px 0 var(--blood);
+  margin-bottom: 16px;
+}
+.name-input {
+  display: block;
+  width: 100%;
+  height: 46px;
+  margin: 0 auto 16px;
+  padding: 8px 12px;
+  font-family: var(--cn);
+  font-size: 20px;
+  letter-spacing: 1px;
+  text-align: center;
+  color: var(--gold);
+  background: #05080f;
+  border: 3px solid var(--edge-lo);
+  outline: none;
+  box-shadow:
+    inset 2px 2px 0 var(--edge-hi),
+    inset -2px -2px 0 var(--edge-lo);
+}
+.name-input:focus {
+  border-color: var(--gold);
+  box-shadow:
+    inset 2px 2px 0 var(--edge-hi),
+    inset -2px -2px 0 var(--edge-lo),
+    0 0 12px rgba(255,210,74,0.28);
+}
+.name-card .pixel-btn {
+  width: 100%;
+  margin: 0;
+}
 
 /* ============================================================
    MAIN FRAME — KOEI grid

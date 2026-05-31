@@ -20,6 +20,9 @@ const sounds = new SoundBoard();
 const PLAYER_NAME_KEY = "paomian-jiangjun-player-name";
 const DEFAULT_PLAYER_NAME = "Beta";
 const playerNameEl = document.getElementById("player-name")!;
+const nameGate = document.getElementById("name-gate")!;
+const firstNameInput = document.getElementById("first-name-input") as HTMLInputElement;
+const nameConfirmBtn = document.getElementById("name-confirm-btn")!;
 
 let source: MetricsSource | null = null;
 let tracker: FaceTracker | null = null;
@@ -28,6 +31,7 @@ let running = false;
 let selectedBoss: NoodleBoss = DEFAULT_NOODLE_BOSS;
 let selectedMode: GameMode = "classic";
 let playerName = loadPlayerName();
+let hasConfirmedPlayerName = hasStoredPlayerName();
 let campaignStageIndex = 0;
 let campaignElapsed = 0;
 let campaignMaxCombo = 0;
@@ -82,7 +86,24 @@ selectMode(selectedMode);
 ui.setPlayerName(playerName);
 bindPlayerNameEditor();
 
-startBtn.addEventListener("click", async () => {
+startBtn.addEventListener("click", () => {
+  if (!hasConfirmedPlayerName) {
+    showNameGate();
+    return;
+  }
+  void launchGame();
+});
+nameConfirmBtn.addEventListener("click", () => {
+  confirmFirstName();
+});
+firstNameInput.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    confirmFirstName();
+  }
+});
+
+async function launchGame() {
   homeScreenActive = false;
   sounds.stopHomeAmbience();
   startBtn.setAttribute("disabled", "true");
@@ -97,8 +118,25 @@ startBtn.addEventListener("click", async () => {
     bootStatus.textContent = "摄像头不可用，请允许摄像头权限后重试";
     startBtn.removeAttribute("disabled");
   }
-});
+}
 homeBtn.addEventListener("click", returnHome);
+
+function showNameGate() {
+  firstNameInput.value = playerName;
+  nameGate.classList.remove("hidden");
+  window.setTimeout(() => {
+    firstNameInput.focus();
+    firstNameInput.select();
+  }, 0);
+}
+
+function confirmFirstName() {
+  if (nameGate.classList.contains("hidden")) return;
+  setPlayerName(firstNameInput.value);
+  hasConfirmedPlayerName = true;
+  nameGate.classList.add("hidden");
+  void launchGame();
+}
 
 function beginGame() {
   sessionId++;
@@ -376,7 +414,17 @@ function loadPlayerName() {
 function setPlayerName(name: string) {
   playerName = normalizePlayerName(name);
   localStorage.setItem(PLAYER_NAME_KEY, playerName);
+  hasConfirmedPlayerName = true;
   ui.setPlayerName(playerName);
+}
+
+function hasStoredPlayerName() {
+  try {
+    const value = localStorage.getItem(PLAYER_NAME_KEY);
+    return !!value && normalizePlayerName(value).length > 0;
+  } catch {
+    return false;
+  }
 }
 
 function normalizePlayerName(name: string) {
