@@ -297,6 +297,7 @@ export class UI {
     } else {
       drawCenteredText(ctx, "定 格 表 情", 450, faceY + 138, `28px ${cnFont}`, "#f3ddb0");
     }
+    if (isCampaignConquered(r)) drawGeneralCrown(ctx, faceX, faceY, faceSize);
 
     let y = 508;
     for (const line of lines) {
@@ -381,6 +382,10 @@ function shareLines(r: GameResult) {
   ];
 }
 
+function isCampaignConquered(r: GameResult) {
+  return r.mode === "campaign" && r.totalStages > 0 && r.stagesCleared >= r.totalStages;
+}
+
 function drawPixelPanel(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number) {
   ctx.fillStyle = "#0d2142";
   ctx.fillRect(x, y, w, h);
@@ -390,6 +395,47 @@ function drawPixelPanel(ctx: CanvasRenderingContext2D, x: number, y: number, w: 
   ctx.strokeStyle = "#6e9ad7";
   ctx.lineWidth = 5;
   ctx.strokeRect(x + 18, y + 18, w - 36, h - 36);
+}
+
+function drawGeneralCrown(ctx: CanvasRenderingContext2D, faceX: number, faceY: number, faceSize: number) {
+  const unit = faceSize / 260;
+  const rect = (x: number, y: number, w: number, h: number, color: string) => {
+    ctx.fillStyle = color;
+    ctx.fillRect(
+      Math.round(faceX + x * unit),
+      Math.round(faceY + y * unit),
+      Math.round(w * unit),
+      Math.round(h * unit),
+    );
+  };
+
+  rect(36, 6, 188, 22, "#3c0806");
+  rect(52, -14, 32, 56, "#151006");
+  rect(114, -22, 32, 70, "#151006");
+  rect(176, -14, 32, 56, "#151006");
+  rect(48, -8, 28, 52, "#ffd03d");
+  rect(82, 6, 34, 34, "#f3a72a");
+  rect(110, -16, 40, 64, "#ffd03d");
+  rect(150, 6, 34, 34, "#f3a72a");
+  rect(188, -8, 28, 52, "#ffd03d");
+
+  rect(24, 26, 212, 18, "#151006");
+  rect(30, 20, 200, 34, "#d8392b");
+  rect(38, 25, 184, 8, "#ff6850");
+  rect(54, 54, 152, 38, "#7f1414");
+  rect(62, 58, 136, 12, "#d8392b");
+  rect(104, 52, 52, 42, "#f3a72a");
+  rect(114, 58, 32, 26, "#ffd03d");
+  rect(123, 65, 14, 12, "#fff0a6");
+
+  rect(0, 46, 44, 20, "#151006");
+  rect(216, 46, 44, 20, "#151006");
+  rect(6, 42, 44, 16, "#ffd03d");
+  rect(210, 42, 44, 16, "#ffd03d");
+  rect(12, 58, 24, 36, "#8e1515");
+  rect(224, 58, 24, 36, "#8e1515");
+  rect(18, 60, 12, 26, "#d8392b");
+  rect(230, 60, 12, 26, "#d8392b");
 }
 
 function drawCenteredText(
