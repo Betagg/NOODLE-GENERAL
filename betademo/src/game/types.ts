@@ -1,5 +1,5 @@
 export type Phase = "blow" | "suck" | "win";
-export type GameMode = "classic" | "minute" | "campaign";
+export type GameMode = "classic" | "duel" | "minute" | "campaign";
 
 export interface NoodleBoss {
   id: string;
@@ -49,6 +49,14 @@ export interface FaceMetrics {
   blow: number; // 0..1
   suck: number; // 0..1
   hasFace: boolean;
+  players?: PlayerFaceMetrics[];
+}
+
+export interface PlayerFaceMetrics {
+  blow: number;
+  suck: number;
+  hasFace: boolean;
+  x: number;
 }
 
 export interface MetricsSource {
@@ -69,4 +77,7 @@ export interface GameResult {
   worldSize: number;
   beatPct: number;
   grade: string;
+  duelWinner?: string;
+  duelLoser?: string;
+  duelLoserProgress?: number;
 }

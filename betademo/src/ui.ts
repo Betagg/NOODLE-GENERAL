@@ -1,9 +1,18 @@
-import type { GameState, GameResult, NoodleBoss, ReportKind } from "./game/types";
+import type { GameState, GameResult, NoodleBoss, Phase, ReportKind } from "./game/types";
 import { getCampaignTop, getMinuteTop, getTop } from "./game/leaderboard";
 import { renderQrToCanvas } from "./qr";
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) =>
   document.getElementById(id) as T;
+
+export interface DuelViewPlayer {
+  name: string;
+  phase: Phase;
+  temperature: number;
+  noodle: number;
+  hasFace: boolean;
+  finished: boolean;
+}
 
 export class UI {
   private tempBar = $("temp-bar");
@@ -38,6 +47,21 @@ export class UI {
   private playerJob = $("player-job");
   private armyName = $("army-name");
   private armyRank = $("army-rank");
+  private duelPanel = $("duel-panel");
+  private duelLeft = document.querySelector<HTMLElement>(".duelist.left")!;
+  private duelRight = document.querySelector<HTMLElement>(".duelist.right")!;
+  private duelLeftName = $("duel-left-name");
+  private duelLeftPhase = $("duel-left-phase");
+  private duelLeftTemp = $("duel-left-temp");
+  private duelLeftTempBar = $("duel-left-temp-bar");
+  private duelLeftNoodle = $("duel-left-noodle");
+  private duelLeftNoodleBar = $("duel-left-noodle-bar");
+  private duelRightName = $("duel-right-name");
+  private duelRightPhase = $("duel-right-phase");
+  private duelRightTemp = $("duel-right-temp");
+  private duelRightTempBar = $("duel-right-temp-bar");
+  private duelRightNoodle = $("duel-right-noodle");
+  private duelRightNoodleBar = $("duel-right-noodle-bar");
   private resultFace = $("result-face");
   private resultSnap = $<HTMLCanvasElement>("result-snap");
   private shareArt = $<HTMLCanvasElement>("share-art");
@@ -84,7 +108,7 @@ export class UI {
       this.battleCountdown.classList.add("hidden");
     }
     this.modeVal.textContent =
-      s.mode === "minute" ? "限时" : s.mode === "campaign" ? "征战" : "一碗";
+      s.mode === "minute" ? "限时" : s.mode === "campaign" ? "征战" : s.mode === "duel" ? "双人" : "一碗";
     this.bowlsLabel.textContent = s.mode === "campaign" ? "关卡" : "碗数";
     this.bowlsVal.textContent =
       s.mode === "campaign" && s.totalStages > 0
@@ -100,6 +124,11 @@ export class UI {
     const activeSuck = phase === "suck" ? suck : 0;
     this.blowMeter.style.width = `${Math.round(activeBlow * 100)}%`;
     this.openMeter.style.width = `${Math.round(activeSuck * 100)}%`;
+  }
+
+  setDuelMeters(blow: number, suck: number) {
+    this.blowMeter.style.width = `${Math.round(Math.max(0, Math.min(1, blow)) * 100)}%`;
+    this.openMeter.style.width = `${Math.round(Math.max(0, Math.min(1, suck)) * 100)}%`;
   }
 
   setSignal(live: boolean, text: string) {
@@ -129,6 +158,32 @@ export class UI {
 
     this.playerJob.textContent = active ? `${titles[rank]} · Lv.${6 + rank}` : "吹面骑兵 · Lv.6";
     this.armyRank.textContent = active ? `Lv.${6 + rank} ${titles[rank]}` : "Lv.6 吹面骑兵";
+  }
+
+  setDuelVisible(active: boolean) {
+    this.duelPanel.classList.toggle("hidden", !active);
+    if (!active) {
+      this.duelLeft.classList.remove("winner", "waiting");
+      this.duelRight.classList.remove("winner", "waiting");
+    }
+  }
+
+  syncDuel(players: [DuelViewPlayer, DuelViewPlayer], elapsed: number, winnerIndex: number | null) {
+    this.renderDuelPlayer("left", players[0], winnerIndex === 0);
+    this.renderDuelPlayer("right", players[1], winnerIndex === 1);
+
+    this.timerLabel.textContent = "计时";
+    this.timerVal.textContent = elapsed.toFixed(2);
+    this.modeVal.textContent = "双人";
+    this.bowlsLabel.textContent = "胜负";
+    this.bowlsVal.textContent = winnerIndex === null ? "PK中" : `${players[winnerIndex].name}胜`;
+    this.expVal.textContent = `${Math.round(24 + (200 - players[0].noodle - players[1].noodle) * 0.18)}`;
+    this.bossHeat.textContent = `${Math.round(Math.min(players[0].temperature, players[1].temperature))}`;
+    this.bossLen.textContent = `${Math.round((players[0].noodle + players[1].noodle) / 2)}`;
+    this.battleCountdown.classList.add("hidden");
+    this.phaseBanner.textContent =
+      winnerIndex === null ? "雙 人 搶 面" : `${players[winnerIndex].name} 勝`;
+    this.phaseBanner.classList.remove("hidden");
   }
 
   setPhase(phase: GameState["phase"]) {
@@ -174,15 +229,18 @@ export class UI {
   showResult(r: GameResult) {
     const isMinute = r.mode === "minute";
     const isCampaign = r.mode === "campaign";
-    $("result-title").textContent = isMinute ? "限 時" : isCampaign ? "封 將" : "勝 利";
-    $("again-btn").textContent = isMinute ? "再 战 一 分" : isCampaign ? "再 征 五 关" : "再 来 一 碗";
-    $("r-time-label").textContent = isMinute ? "挑战时长" : isCampaign ? "总用时" : "完成时间";
+    const isDuel = r.mode === "duel";
+    $("result-title").textContent = isMinute ? "限 時" : isCampaign ? "封 將" : isDuel ? "勝 者" : "勝 利";
+    $("again-btn").textContent = isMinute ? "再 战 一 分" : isCampaign ? "再 征 五 关" : isDuel ? "再 PK 一 局" : "再 来 一 碗";
+    $("r-time-label").textContent = isMinute ? "挑战时长" : isCampaign ? "总用时" : isDuel ? "胜利用时" : "完成时间";
     $("r-time").textContent = isMinute ? "60 秒" : `${r.time.toFixed(2)} 秒`;
-    $("r-rank-label").textContent = isMinute ? "吃完碗数" : isCampaign ? "通关进度" : "世界排名";
+    $("r-rank-label").textContent = isMinute ? "吃完碗数" : isCampaign ? "通关进度" : isDuel ? "获胜将军" : "世界排名";
     $("r-rank").textContent = isMinute
       ? `${r.bowls} 碗`
       : isCampaign
         ? `${r.stagesCleared}/${r.totalStages} 关`
+        : isDuel
+          ? `${r.duelWinner ?? r.name}`
         : `#${r.rank.toLocaleString()}`;
     $("r-grade").textContent = r.grade;
     $("r-combo").textContent = `x${r.maxCombo}`;
@@ -193,6 +251,8 @@ export class UI {
       ? "一 分 鐘 排 行"
       : isCampaign
         ? "征 戰 排 行"
+        : isDuel
+          ? "雙 人 戰 報"
         : "本 地 排 行 榜";
     if (isMinute) {
       for (const e of getMinuteTop(8)) {
@@ -213,6 +273,15 @@ export class UI {
         li.innerHTML = `<span>${e.name}</span><b>${e.stagesCleared}关</b>`;
         list.appendChild(li);
       }
+    } else if (isDuel) {
+      const win = document.createElement("li");
+      win.className = "me";
+      win.innerHTML = `<span>${r.duelWinner ?? r.name}</span><b>胜</b>`;
+      list.appendChild(win);
+
+      const loser = document.createElement("li");
+      loser.innerHTML = `<span>${r.duelLoser ?? "对手"}</span><b>吃掉${r.duelLoserProgress ?? 0}%</b>`;
+      list.appendChild(loser);
     } else {
       for (const e of getTop(8)) {
         const li = document.createElement("li");
@@ -223,6 +292,25 @@ export class UI {
       }
     }
     show("result");
+  }
+
+  private renderDuelPlayer(side: "left" | "right", player: DuelViewPlayer, isWinner: boolean) {
+    const panel = side === "left" ? this.duelLeft : this.duelRight;
+    const name = side === "left" ? this.duelLeftName : this.duelRightName;
+    const phase = side === "left" ? this.duelLeftPhase : this.duelRightPhase;
+    const temp = side === "left" ? this.duelLeftTemp : this.duelRightTemp;
+    const tempBar = side === "left" ? this.duelLeftTempBar : this.duelRightTempBar;
+    const noodle = side === "left" ? this.duelLeftNoodle : this.duelRightNoodle;
+    const noodleBar = side === "left" ? this.duelLeftNoodleBar : this.duelRightNoodleBar;
+
+    name.textContent = player.name;
+    phase.textContent = phaseLabel(player);
+    temp.textContent = `${Math.round(player.temperature)}℃`;
+    tempBar.style.width = `${Math.max(0, Math.min(100, player.temperature))}%`;
+    noodle.textContent = `${Math.round(player.noodle)}%`;
+    noodleBar.style.width = `${Math.max(0, Math.min(100, player.noodle))}%`;
+    panel.classList.toggle("winner", isWinner);
+    panel.classList.toggle("waiting", !player.hasFace);
   }
 
   showShare(r: GameResult, snapFrom?: HTMLVideoElement) {
@@ -345,6 +433,7 @@ function qrSafeUrl(url: string) {
 function shareTitle(r: GameResult) {
   if (r.mode === "minute") return "限 時";
   if (r.mode === "campaign") return "封 將";
+  if (r.mode === "duel") return "勝 者";
   return "勝 利";
 }
 
@@ -365,12 +454,27 @@ function shareLines(r: GameResult) {
       { label: "获得称号", value: r.grade, hot: true },
     ];
   }
+  if (r.mode === "duel") {
+    return [
+      { label: "获胜将军", value: r.duelWinner ?? r.name, hot: true },
+      { label: "胜利用时", value: `${r.time.toFixed(2)} 秒` },
+      { label: "对手战况", value: `${r.duelLoser ?? "对手"} ${r.duelLoserProgress ?? 0}%` },
+      { label: "获得称号", value: r.grade, hot: true },
+    ];
+  }
   return [
     { label: "完成时间", value: `${r.time.toFixed(2)} 秒` },
     { label: "世界排名", value: `#${r.rank.toLocaleString()}`, hot: true },
     { label: "击败玩家", value: `${r.beatPct}%` },
     { label: "获得称号", value: r.grade, hot: true },
   ];
+}
+
+function phaseLabel(player: DuelViewPlayer) {
+  if (!player.hasFace) return "待入镜";
+  if (player.finished || player.phase === "win") return "胜出";
+  if (player.phase === "suck") return "吸面";
+  return "吹凉";
 }
 
 function isCampaignConquered(r: GameResult) {

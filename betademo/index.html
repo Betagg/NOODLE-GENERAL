@@ -30,6 +30,9 @@
           <button type="button" class="mode-option selected" data-mode="classic">
             <b>一碗决胜</b><span>吃完即胜</span>
           </button>
+          <button type="button" class="mode-option" data-mode="duel">
+            <b>双人PK</b><span>同屏抢面</span>
+          </button>
           <button type="button" class="mode-option" data-mode="minute">
             <b>一分钟挑战</b><span>限时吃碗数</span>
           </button>
@@ -71,6 +74,27 @@
             <div id="phase-banner" class="phase-banner">吹 凉 泡 面</div>
             <div id="battle-countdown" class="battle-countdown hidden">01:00</div>
             <div id="ready-flash" class="ready-flash hidden">READY TO EAT</div>
+          </div>
+
+          <div id="duel-panel" class="panel duel-panel hidden">
+            <div class="panel-tab">雙 人 PK</div>
+            <div class="duel-grid">
+              <div class="duelist left">
+                <div class="duel-head"><b id="duel-left-name">左将</b><span id="duel-left-phase">待命</span></div>
+                <div class="duel-row"><label>温度</label><span id="duel-left-temp">100℃</span></div>
+                <div class="duel-bar"><i id="duel-left-temp-bar" class="temp"></i></div>
+                <div class="duel-row"><label>面量</label><span id="duel-left-noodle">100%</span></div>
+                <div class="duel-bar"><i id="duel-left-noodle-bar" class="noodle"></i></div>
+              </div>
+              <div class="duel-vs">VS</div>
+              <div class="duelist right">
+                <div class="duel-head"><b id="duel-right-name">右将</b><span id="duel-right-phase">待命</span></div>
+                <div class="duel-row"><label>温度</label><span id="duel-right-temp">100℃</span></div>
+                <div class="duel-bar"><i id="duel-right-temp-bar" class="temp"></i></div>
+                <div class="duel-row"><label>面量</label><span id="duel-right-noodle">100%</span></div>
+                <div class="duel-bar"><i id="duel-right-noodle-bar" class="noodle"></i></div>
+              </div>
+            </div>
           </div>
 
           <!-- 战报区域 -->

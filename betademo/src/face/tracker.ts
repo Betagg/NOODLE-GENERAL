@@ -3,7 +3,7 @@ import {
   FilesetResolver,
   type FaceLandmarkerResult,
 } from "@mediapipe/tasks-vision";
-import type { FaceMetrics, MetricsSource } from "../game/types";
+import type { FaceMetrics, MetricsSource, PlayerFaceMetrics } from "../game/types";
 
 const WASM =
   "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.18/wasm";
@@ -24,6 +24,10 @@ export class FaceTracker implements MetricsSource {
   private metrics: FaceMetrics = { blow: 0, suck: 0, hasFace: false };
   private sBlow = 0;
   private sSuck = 0;
+  private playerSmooth = [
+    { blow: 0, suck: 0 },
+    { blow: 0, suck: 0 },
+  ];
 
   constructor(video: HTMLVideoElement) {
     this.video = video;
@@ -49,7 +53,7 @@ export class FaceTracker implements MetricsSource {
       outputFaceBlendshapes: true,
       outputFacialTransformationMatrixes: false,
       runningMode: "VIDEO",
-      numFaces: 1,
+      numFaces: 2,
     });
 
     onStatus?.("READY");
@@ -70,37 +74,54 @@ export class FaceTracker implements MetricsSource {
       return;
     }
 
-    const shapes = res.faceBlendshapes?.[0]?.categories;
-    if (!shapes || shapes.length === 0) {
+    const faceBlendshapes = res.faceBlendshapes ?? [];
+    if (faceBlendshapes.length === 0) {
       // decay toward zero when no face
       this.sBlow *= 0.8;
       this.sSuck *= 0.8;
-      this.metrics = { blow: this.sBlow, suck: this.sSuck, hasFace: false };
+      for (const smooth of this.playerSmooth) {
+        smooth.blow *= 0.8;
+        smooth.suck *= 0.8;
+      }
+      this.metrics = { blow: this.sBlow, suck: this.sSuck, hasFace: false, players: [] };
       return;
     }
 
-    const get = (name: string) =>
-      shapes.find((c) => c.categoryName === name)?.score ?? 0;
+    const rawPlayers = faceBlendshapes
+      .map((face, index) => {
+        const raw = faceMetricsFromShapes(face.categories);
+        const centerX = faceCenterX(res, index);
+        return { ...raw, x: centerX };
+      })
+      // The video is mirrored in the UI, so higher raw x appears on the left side of the screen.
+      .sort((a, b) => b.x - a.x)
+      .slice(0, 2);
 
-    const funnel = get("mouthFunnel");
-    const pucker = get("mouthPucker");
-    const jaw = get("jawOpen");
-    const rounded = Math.max(funnel, pucker * 0.9);
+    const players: PlayerFaceMetrics[] = rawPlayers.map((raw, index) => {
+      const smooth = this.playerSmooth[index];
+      smooth.blow += (norm(raw.blow, 0.08, 0.55) - smooth.blow) * 0.45;
+      smooth.suck += (norm(raw.suck, 0.1, 0.58) - smooth.suck) * 0.45;
+      return {
+        blow: clamp01(smooth.blow),
+        suck: clamp01(smooth.suck),
+        hasFace: true,
+        x: raw.x,
+      };
+    });
+    for (let index = players.length; index < this.playerSmooth.length; index++) {
+      this.playerSmooth[index].blow *= 0.8;
+      this.playerSmooth[index].suck *= 0.8;
+    }
 
-    // Blow: funnel/pucker shape while jaw is NOT wide open.
-    const rawBlow = rounded * (1 - Math.min(1, jaw * 1.4));
-    // Suck: rounded lips / small opening. A wide-open jaw should not count as eating noodles.
-    const jawTooOpen = Math.max(0, jaw - 0.12);
-    const rawSuck = rounded * (1 - Math.min(1, jawTooOpen * 1.8));
-
-    // EMA smoothing — responsive but not jittery.
-    this.sBlow += (norm(rawBlow, 0.08, 0.55) - this.sBlow) * 0.45;
-    this.sSuck += (norm(rawSuck, 0.1, 0.58) - this.sSuck) * 0.45;
+    const primary = players[0] ?? { blow: 0, suck: 0, hasFace: false };
+    this.sBlow += (primary.blow - this.sBlow) * 0.55;
+    this.sSuck += (primary.suck - this.sSuck) * 0.55;
 
     this.metrics = {
       blow: clamp01(this.sBlow),
       suck: clamp01(this.sSuck),
       hasFace: true,
+      players,
     };
   };
 
@@ -117,4 +138,25 @@ function norm(v: number, lo: number, hi: number) {
 }
 function clamp01(v: number) {
   return v < 0 ? 0 : v > 1 ? 1 : v;
+}
+
+function faceMetricsFromShapes(shapes: { categoryName: string; score: number }[]) {
+  const get = (name: string) =>
+    shapes.find((c) => c.categoryName === name)?.score ?? 0;
+
+  const funnel = get("mouthFunnel");
+  const pucker = get("mouthPucker");
+  const jaw = get("jawOpen");
+  const rounded = Math.max(funnel, pucker * 0.9);
+
+  const blow = rounded * (1 - Math.min(1, jaw * 1.4));
+  const jawTooOpen = Math.max(0, jaw - 0.12);
+  const suck = rounded * (1 - Math.min(1, jawTooOpen * 1.8));
+  return { blow, suck };
+}
+
+function faceCenterX(result: FaceLandmarkerResult, index: number) {
+  const landmarks = result.faceLandmarks?.[index];
+  if (!landmarks || landmarks.length === 0) return index;
+  return landmarks.reduce((sum, point) => sum + point.x, 0) / landmarks.length;
 }
